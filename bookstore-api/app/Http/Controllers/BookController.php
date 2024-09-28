@@ -36,8 +36,7 @@ class BookController extends Controller
             $book = $this->bookService->createBook($validatedData);
 
             return response()->json($book, 201);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation errors',
                 'errors' => $e->errors()
@@ -48,6 +47,28 @@ class BookController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function index(Request $request)
+    {
+        $request->validate([
+            'per_page' => 'integer|min:1',
+            'author' => 'nullable|string|max:255',
+            'min_price' => 'nullable|numeric',
+            'max_price' => 'nullable|numeric',
+        ]);
+
+        $perPage = $request->input('per_page', 10);
+
+        $filters = [
+            'author' => $request->input('author'),
+            'min_price' => $request->input('min_price'),
+            'max_price' => $request->input('max_price'),
+        ];
+
+        $books = $this->bookService->getAll((int)$perPage, $filters);
+
+        return response()->json($books, 200);
     }
 
     public function update(Request $request, $id)
@@ -98,4 +119,3 @@ class BookController extends Controller
         }
     }
 }
-
