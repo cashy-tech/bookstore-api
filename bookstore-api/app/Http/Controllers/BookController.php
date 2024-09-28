@@ -4,9 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Book;
+use App\Services\BookService;
 
 class BookController extends Controller
 {
+    protected $bookService;
+    public function __construct(BookService $bookService)
+    {
+        $this->bookService = $bookService;
+    }
+
     //Storing a book
  public function store(Request $request)
 {
@@ -17,59 +24,45 @@ class BookController extends Controller
         'price' => 'required|numeric|min:0',
     ]);
 
-    $book = Book::create($validatedData);
+    $book = $this->bookService->createBook($validatedData);
 
     return response()->json($book, 201);
+
 }
 
 
+//Updating a book
+public function update(Request $request, $id)
+{
+    $validatedData = $request->validate([
+        'title' => 'sometimes|string',
+        'author' => 'sometimes|string',
+        'isbn' => 'sometimes|string',
+        'price' => 'sometimes|numeric',
+    ]);
+    $book = $this->bookService->updateBook($validatedData, $id);
+    return response()->json($book, 200);
+
+}
+//Fetching a book
+public function show($id){
+    $book = $this->bookService->getById($id);
+
+    return response()->json($book);
+}
     //Fetching all books
     public function index(){
-        $books = Book::all();
-        if (!$books){
-            return response() -> json(['message' => 'No books found'], 404);
-        }
-        return response() -> json($books);
+
+        $books = $this->bookService->getAll();
+        return response()->json($books);
     }
 
-    //Fetching a book
-    public function show($id){
-        $book = Book::find($id);
-        if (!$book){
-            return response() -> json(['message' => 'Book not found'], 404);
-        }
-        return response() -> json($book);
-    }
-
-
-    //Updating a book
-    public function update(Request $request, $id)
-    {
-        $validatedData = $request->validate([
-            'title' => 'sometimes|string',
-            'author' => 'sometimes|string',
-            'isbn' => 'sometimes|string',
-            'price' => 'sometimes|numeric',
-        ]);
-        $book = Book::find($id);
-
-        if (!$book){
-            return response() -> json(['message' => 'Book not found'], 404);
-        }
-
-        $book->update($validatedData);
-        return response() -> json($book, 200);
-
-    }
 
     //Deleting a book
     public function destroy($id){
-        $book = Book::find($id);
-        if (!$book){
-            return response() -> json(['message' => 'Book not found'], 404);
-        }
-        $book->delete();
-        return response() -> json(['message' => 'Book deleted'], 200);
+        $book = $this->bookService->deleteBook($id);
+        return response()->json(['message' => 'Book deleted'], 200);
     }
 
 }
+
