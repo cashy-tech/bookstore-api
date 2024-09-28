@@ -33,7 +33,7 @@ class BookController extends Controller
 
         return response()->json($books);
     }
-    
+
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
@@ -54,6 +54,7 @@ class BookController extends Controller
 
         return response()->json($book);
     }
+    
     public function destroy($id)
     {
         $book = $this->bookService->deleteBook($id);
