@@ -27,6 +27,13 @@ class BookController extends Controller
         return response()->json($book, 201);
     }
 
+     public function index()
+    {
+        $books = $this->bookService->getAll();
+
+        return response()->json($books);
+    }
+    
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
@@ -39,13 +46,6 @@ class BookController extends Controller
         $book = $this->bookService->updateBook($validatedData, $id);
 
         return response()->json($book, 200);
-    }
-
-     public function index()
-    {
-        $books = $this->bookService->getAll();
-
-        return response()->json($books);
     }
 
     public function show($id)
