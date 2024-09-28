@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\Book;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class BookService
 {
@@ -12,6 +13,10 @@ class BookService
     public function createBook(array $data): JsonResponse
     {
         $book = Book::create($data);
+
+        if (!$book) {
+            return response()->json(['message' => 'Book not created'], 500);
+        }
 
         return response()->json($book, 201);
     }
@@ -50,10 +55,12 @@ class BookService
     public function deleteBook($id): JsonResponse
     {
         $book = Book::find($id);
+
         if (!$book) {
-            return response()->json(['message' => 'Book not found'], 404);
-        }
+            throw new ModelNotFoundException("Book not found");        }
+
         $book->delete();
+
         return response()->json(['message' => 'Book deleted'], 200);
     }
 }
