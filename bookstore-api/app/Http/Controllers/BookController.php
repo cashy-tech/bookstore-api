@@ -50,6 +50,19 @@ class BookController extends Controller
         }
     }
 
+    public function index()
+    {
+        try {
+            $books = $this->bookService->getAll();
+            return response()->json($books, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function update(Request $request, $id)
     {
         try {
