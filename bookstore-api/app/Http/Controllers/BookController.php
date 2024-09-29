@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Book;
+use App\Exceptions\BookException;
 use App\Services\BookService;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class BookController extends Controller
@@ -18,36 +16,25 @@ class BookController extends Controller
         $this->bookService = $bookService;
     }
 
-    public function store(Request $request)
-    {
-        try {
-            $validatedData = $request->validate([
-                'title' => 'required|string|max:255',
-                'author' => 'required|string|max:255',
-                'isbn' => 'required|string|unique:books,isbn|max:13',
-                'price' => 'required|numeric|min:0',
-            ], [
-                'title.required' => 'The title field is required.',
-                'author.required' => 'The author field is required.',
-                'isbn.required' => 'The ISBN field is required.',
-                'price.required' => 'The price field is required.',
-            ]);
+   public function store(Request $request)
+{
+    try {
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'author' => 'required|string|max:255',
+            'isbn' => 'required|string|max:20',
+            'price' => 'required|numeric|min:0',
+        ]);
 
-            $book = $this->bookService->createBook($validatedData);
+        $book = $this->bookService->createBook($validatedData);
 
-            return response()->json($book, 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation errors',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json($book, 201);
+    } catch (ValidationException $e) {
+        return response()->json(['error' => $e->getMessage()], 422);
+    } catch (BookException $e) {
+        return $e->render();
     }
+}
 
      public function index(Request $request)
     {
@@ -85,11 +72,9 @@ class BookController extends Controller
 
             return response()->json($book, 200);
         } catch (ValidationException $e) {
-            return response()->json(['error' => $e->validator->errors()], 422);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['error' => 'Book not found'], 404);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'An error occurred while updating the book'], 500);
+            throw BookException::validationError();
+        } catch (BookException $e) {
+            return $e->render();
         }
     }
 
@@ -98,12 +83,9 @@ class BookController extends Controller
     {
         try {
             $book = $this->bookService->getById($id);
-
             return response()->json($book, 200);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['error' => 'Book not found'], 404);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'An error occurred while fetching the book'], 500);
+        } catch (BookException $e) {
+            return $e->render();
         }
     }
 
@@ -111,12 +93,9 @@ class BookController extends Controller
     {
         try {
             $this->bookService->deleteBook($id);
-
             return response()->json(['message' => 'Book deleted'], 200);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['error' => 'Book not found'], 404);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'An error occurred while deleting the book'], 500);
+        } catch (BookException $e) {
+            return $e->render();
         }
     }
 }
