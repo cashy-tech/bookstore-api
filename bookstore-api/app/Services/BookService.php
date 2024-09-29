@@ -2,66 +2,106 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Exceptions\BookException;
 use App\Models\Book;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
 
 class BookService
 {
+   public function createBook(array $data)
+{
+    try {
+        $data['isbn'] = strtoupper($data['isbn']);
 
-    public function createBook(array $data): JsonResponse
-    {
+        if (Book::where('isbn', $data['isbn'])->exists()) {
+            throw BookException::isbnAlreadyTaken();
+        }
+
         $book = Book::create($data);
 
         if (!$book) {
-            return response()->json(['message' => 'Book not created'], 500);
+            throw BookException::createError();
         }
 
-        return response()->json($book, 201);
+        return $book;
+    } catch (ValidationException $e) {
+        throw BookException::validationError();
+    } catch (QueryException $e) {
+        throw BookException::databaseError();
     }
+}
 
-    public function updateBook(array $data, $id): JsonResponse
+
+    public function updateBook(array $data, $id)
     {
+        try {
 
-        $book = Book::find($id);
+            $book = Book::find($id);
 
-        if (!$book) {
-            return response()->json(['message' => 'Book not found'], 404);
+            if (!$book) {
+                throw BookException::notAvailable();
+            }
+
+            $data['isbn'] = strtoupper($data['isbn']);
+
+            if (Book::where('isbn', $data['isbn'])->exists()) {
+                throw BookException::isbnAlreadyTaken();
+            }
+
+            $book->update($data);
+
+            return $book;
+        } catch (ValidationException $e) {
+            throw BookException::validationError();
+        } catch (QueryException $e) {
+            throw BookException::updateError();
         }
-
-        $book->update($data);
-        return response()->json($book, 200);
     }
 
-    public function getById($id): JsonResponse
+    public function getById($id)
     {
-        $book = Book::find($id);
-        if (!$book) {
-            return response()->json(['message' => 'Book not found'], 404);
+        try {
+            $book = Book::find($id);
+
+            if (!$book) {
+                throw BookException::notAvailable();
+            }
+
+            return $book;
+        } catch (QueryException $e) {
+            throw BookException::databaseError();
         }
-        return response()->json($book);
     }
 
-    public function getAll(): JsonResponse
+    public function getAll()
     {
-        $books = Book::all();
-        if (!$books) {
-            return response()->json(['message' => 'No books found'], 404);
+        try {
+            $books = Book::all();
+
+            if ($books->isEmpty()) {
+                throw BookException::booksNotFound();
+            }
+
+            return $books;
+        } catch (QueryException $e) {
+            throw BookException::databaseError();
         }
-        return response()->json($books);
     }
 
-    public function deleteBook($id): JsonResponse
+    public function deleteBook($id)
     {
-        $book = Book::find($id);
+        try {
+            $book = Book::find($id);
 
-        if (!$book) {
-            throw new ModelNotFoundException("Book not found");        }
+            if (!$book) {
+                throw BookException::notAvailable();
+            }
 
-        $book->delete();
-
-        return response()->json(['message' => 'Book deleted'], 200);
+            $book->delete();
+        } catch (QueryException $e) {
+            throw BookException::deleteError();
+        }
     }
 }
 
