@@ -16,26 +16,25 @@ class BookController extends Controller
         $this->bookService = $bookService;
     }
 
-   public function store(Request $request)
-{
-    try {
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'author' => 'required|string|max:255',
-            'isbn' => 'required|string|max:20',
-            'price' => 'required|numeric|min:0',
-        ]);
+    public function store(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'title'   => 'required|string|max:255',
+                'author'  => 'required|string|max:255',
+                'isbn'    => 'required|string|max:20',
+                'price'   => 'required|numeric|min:0',
+            ]);
 
-        $book = $this->bookService->createBook($validatedData);
+            $book = $this->bookService->createBook($validatedData);
 
-        return response()->json($book, 201);
-    } catch (ValidationException $e) {
-        return response()->json(['error' => $e->getMessage()], 422);
-    } catch (BookException $e) {
-        return $e->render();
+            return response()->json($book, 201);
+        } catch (ValidationException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        } catch (BookException $e) {
+            return $e->render();
+        }
     }
-}
-
 
     public function index()
     {
@@ -51,10 +50,10 @@ class BookController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'title' => 'sometimes|string',
-                'author' => 'sometimes|string',
-                'isbn' => 'sometimes|string',
-                'price' => 'sometimes|numeric',
+                'title'   => 'sometimes|string',
+                'author'  => 'sometimes|string',
+                'isbn'    => 'sometimes|string',
+                'price'   => 'sometimes|numeric',
             ]);
 
             $book = $this->bookService->updateBook($validatedData, $id);
