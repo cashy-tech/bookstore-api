@@ -10,22 +10,26 @@ use Illuminate\Validation\ValidationException;
 
 class BookService
 {
-    public function createBook(array $data): JsonResponse
+    public function createBooks(array $data): JsonResponse
     {
         try {
-            $data['isbn'] = strtoupper($data['isbn']);
+            $books = collect($data)->map(function ($book) {
+                $book['isbn'] = strtoupper($book['isbn']);
 
-            if (Book::where('isbn', $data['isbn'])->exists()) {
-                throw BookException::isbnAlreadyTaken();
-            }
+                if (Book::where('isbn', $book['isbn'])->exists()) {
+                    throw BookException::isbnAlreadyTaken();
+                }
 
-            $book = Book::create($data);
+                return Book::create($book);
+            });
 
-            if (!$book) {
+            if ($books->contains(function ($book) {
+                return !$book;
+            })) {
                 throw BookException::createError();
             }
 
-            return response()->json($book, 201);
+            return response()->json($books, 201);
         } catch (ValidationException $e) {
             throw BookException::validationError();
         } catch (QueryException $e) {
