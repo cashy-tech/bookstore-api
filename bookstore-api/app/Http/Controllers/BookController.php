@@ -16,27 +16,27 @@ class BookController extends Controller
         $this->bookService = $bookService;
     }
 
-   public function store(Request $request)
-{
-    try {
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'author' => 'required|string|max:255',
-            'isbn' => 'required|string|max:20',
-            'price' => 'required|numeric|min:0',
-        ]);
+    public function store(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                '*.title' => 'required|string|max:255',
+                '*.author' => 'required|string|max:255',
+                '*.isbn' => 'required|string|max:20',
+                '*.price' => 'required|numeric|min:0',
+            ]);
 
-        $book = $this->bookService->createBook($validatedData);
+            $books = $this->bookService->createBooks($validatedData);
 
-        return response()->json($book, 201);
-    } catch (ValidationException $e) {
-        return response()->json(['error' => $e->getMessage()], 422);
-    } catch (BookException $e) {
-        return $e->render();
+            return response()->json($books, 201);
+        } catch (ValidationException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        } catch (BookException $e) {
+            return $e->render();
+        }
     }
-}
 
-     public function index(Request $request)
+    public function index(Request $request)
     {
         $request->validate([
             'per_page' => 'integer|min:1',
@@ -78,7 +78,6 @@ class BookController extends Controller
         }
     }
 
-
     public function show($id)
     {
         try {
@@ -99,3 +98,4 @@ class BookController extends Controller
         }
     }
 }
+
